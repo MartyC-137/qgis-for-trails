@@ -1,10 +1,11 @@
-arcgis
+area
 black
 bokeh
 cython
 dask-rasterio
 descartes
 earthengine-api
+fiona
 folium
 geeup
 geojsonio
@@ -29,7 +30,6 @@ plotly
 pre-commit
 psycopg2-binary
 pycsw
-pygdal
 pygis
 pyModis
 pymap3d
@@ -50,10 +50,9 @@ scipy
 seaborn
 sentinelhub
 sentinelsat
+shapely
 SQLAlchemy
 tensorflow
-tifffile
-tsraster
 urbansim
 usgs
 verde
