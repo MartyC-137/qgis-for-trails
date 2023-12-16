@@ -218,7 +218,6 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         # Hillshade
         processing.run("gdal:hillshade", hillshade_params, context = context, feedback = feedback)
 
-
         # Aspect
         processing.run("gdal:aspect", aspect_params, context - context, feedback = feedback)
 
