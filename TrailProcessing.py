@@ -1,15 +1,9 @@
 from qgis.PyQt.QtCore import QCoreApplication
-from qgis.core import (QgsProcessing,
-                       QgsProcessingAlgorithm,
+from qgis.core import (QgsProcessingAlgorithm,
                        QgsProcessingException,
-                       QgsProcessingOutputNumber,
-                       QgsProcessingParameterDistance,
-                       QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterVectorDestination,
-                       QgsProcessingParameterRasterDestination,
-                       QgsProject,
-                       QgsRasterLayer)
+                       QgsProcessingParameterRasterDestination)
 from qgis import processing
 
 class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
@@ -34,6 +28,9 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
 
     # Output Aspect
     OUTPUT_ASPECT = 'OUTPUT_ASPECT'
+
+    # Output Relief
+    OUTPUT_RELIEF = 'OUTPUT_RELIEF'
 
     def tr(self, string):
         """
@@ -81,14 +78,15 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
                        - 10m contours
                        - Slope Raster
                        - Hillshade
+                       - Relief
                        """)
 
     def initAlgorithm(self, config=None):
         """
         Here we define the inputs and outputs of the algorithm.
         """
-        # 'INPUT' is the recommended name for the main input
-        # parameter.
+
+        # Input raster layer
         self.addParameter(
             QgsProcessingParameterRasterLayer(
                 self.INPUT_RASTER,
@@ -112,7 +110,7 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterVectorDestination(
                 self.OUTPUT_2M_CONTOURS,
-                self.tr('5m Contour output')
+                self.tr('2m Contour output')
             )
         )
 
@@ -137,6 +135,14 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterRasterDestination(
                 self.OUTPUT_ASPECT,
                 self.tr('Aspect output')
+            )
+        )
+
+        # Relief output
+        self.addParameter(
+            QgsProcessingParameterRasterDestination(
+                self.OUTPUT_RELIEF,
+                self.tr('Relief output')
             )
         )
 
@@ -166,9 +172,9 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
             'FIELD_NAME': 'ELEV'
         }
 
-        contour_params_5m = {
+        contour_params_2m = {
             'INPUT': input_raster,
-            'OUTPUT': parameters[self.OUTPUT_5M_CONTOURS],
+            'OUTPUT': parameters[self.OUTPUT_2M_CONTOURS],
             'BAND': 1,
             'INTERVAL': 2,
             'FIELD_NAME': 'ELEV'
@@ -182,43 +188,55 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
 
         hillshade_params =  {
             'INPUT': input_raster,
-            'BAND':1,
-            'Z_FACTOR':2,
-            'SCALE':1,
-            'AZIMUTH':315,
-            'ALTITUDE':45,
-            'COMPUTE_EDGES':False,
-            'ZEVENBERGEN':False,
-            'COMBINED':False,
-            'MULTIDIRECTIONAL':True,
-            'OPTIONS':'',
-            'EXTRA':'',
+            'BAND': 1,
+            'Z_FACTOR': 2,
+            'SCALE': 1,
+            'AZIMUTH': 315,
+            'ALTITUDE': 45,
+            'COMPUTE_EDGES': False,
+            'ZEVENBERGEN': False,
+            'COMBINED': False,
+            'MULTIDIRECTIONAL': True,
+            'OPTIONS': '',
+            'EXTRA': '',
             'OUTPUT': parameters[self.OUTPUT_HILLSHADE]
         }
 
         aspect_params = {
             'INPUT': input_raster,
-            'BAND':1,
-            'TRIG_ANGLE':False,
-            'ZERO_FLAT':False,
-            'COMPUTE_EDGES':False,
-            'ZEVENBERGEN':False,
-            'OPTIONS':'',
-            'EXTRA':'',
-            'OUTPUT': parameters[self.OUTPUT_ASPECT]}
+            'BAND': 1,
+            'TRIG_ANGLE': False,
+            'ZERO_FLAT': False,
+            'COMPUTE_EDGES': False,
+            'ZEVENBERGEN': False,
+            'OPTIONS': '',
+            'EXTRA': '',
+            'OUTPUT': parameters[self.OUTPUT_ASPECT]
+        }
+
+        relief_params = {
+            'INPUT': input_raster,
+            'Z_FACTOR': 2,
+            'AUTO_COLORS': True,
+            'COLORS': '',
+            'OUTPUT': parameters[self.OUTPUT_RELIEF]
+        }
 
         # Contours
         processing.run('gdal:contour', contour_params_10m, context = context, feedback = feedback)
         processing.run('gdal:contour', contour_params_5m, context = context, feedback = feedback)
         processing.run('gdal:contour', contour_params_2m, context = context, feedback = feedback)
 
-        # Slope
+        # # Slope
         processing.run("native:slope", slope_params, context = context, feedback = feedback)
 
         # Hillshade
         processing.run("gdal:hillshade", hillshade_params, context = context, feedback = feedback)
 
         # Aspect
-        processing.run("gdal:aspect", aspect_params, context - context, feedback = feedback)
+        processing.run("gdal:aspect", aspect_params, context = context, feedback = feedback)
+
+        # Relief
+        processing.run("qgis:relief", relief_params, context = context, feedback = feedback)
 
         return {}
