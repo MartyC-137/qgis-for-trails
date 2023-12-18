@@ -32,6 +32,10 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
     # Output Relief
     OUTPUT_RELIEF = 'OUTPUT_RELIEF'
 
+    # Output Ruggedness
+    OUTPUT_RUGGEDNESS = 'OUTPUT_RUGGEDNESS'
+
+
     def tr(self, string):
         """
         Returns a translatable string with the self.tr() function.
@@ -79,6 +83,7 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
                        - Slope Raster
                        - Hillshade
                        - Relief
+                       - Ruggedness
                        """)
 
     def initAlgorithm(self, config=None):
@@ -143,6 +148,14 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterRasterDestination(
                 self.OUTPUT_RELIEF,
                 self.tr('Relief output')
+            )
+        )
+
+        # Ruggedness output
+        self.addParameter(
+            QgsProcessingParameterRasterDestination(
+                self.OUTPUT_RUGGEDNESS,
+                self.tr('Ruggedness output')
             )
         )
 
@@ -222,6 +235,12 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
             'OUTPUT': parameters[self.OUTPUT_RELIEF]
         }
 
+        ruggedness_params = {
+            'INPUT': input_raster,
+            'Z_FACTOR':2,
+            'OUTPUT':parameters[self.OUTPUT_RUGGEDNESS]
+        }
+
         # Contours
         processing.run('gdal:contour', contour_params_10m, context = context, feedback = feedback)
         processing.run('gdal:contour', contour_params_5m, context = context, feedback = feedback)
@@ -238,5 +257,8 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
 
         # Relief
         processing.run("qgis:relief", relief_params, context = context, feedback = feedback)
+
+        # Ruggedness
+        processing.run("native:ruggednessindex", ruggedness_params, context = context, feedback = feedback)
 
         return {}
