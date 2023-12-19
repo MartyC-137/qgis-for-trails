@@ -238,27 +238,120 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         ruggedness_params = {
             'INPUT': input_raster,
             'Z_FACTOR':2,
-            'OUTPUT':parameters[self.OUTPUT_RUGGEDNESS]
+            'OUTPUT': parameters[self.OUTPUT_RUGGEDNESS]
         }
 
+        slope_black_diamond_params = {
+            'LAYERS': parameters[self.OUTPUT_SLOPE],
+            'EXPRESSION':'"slope_seven_mile_lake@1" >= 15 AND "slope_seven_mile_lake@1" <= 30',
+            'EXTENT':None,
+            'CELL_SIZE':None,
+            'CRS':None,
+            'OUTPUT':'TEMPORARY_OUTPUT'}
+        
+        polygonize_params = {
+            'INPUT': slope_result['OUTPUT'],
+            'BAND':1,
+            'FIELD':'DN',
+            'EIGHT_CONNECTEDNESS':False,
+            'EXTRA':'',
+            'OUTPUT':'TEMPORARY_OUTPUT'}
+
         # Contours
-        processing.run('gdal:contour', contour_params_10m, context = context, feedback = feedback)
-        processing.run('gdal:contour', contour_params_5m, context = context, feedback = feedback)
-        processing.run('gdal:contour', contour_params_2m, context = context, feedback = feedback)
+        processing.run(
+            'gdal:contour',
+            contour_params_10m,
+            context = context,
+            feedback = feedback
+            )
+        
+        processing.run(
+            'gdal:contour',
+            contour_params_5m,
+            context = context,
+            feedback = feedback
+            )
+        processing.run(
+            'gdal:contour',
+            contour_params_2m,
+            context = context,
+            feedback = feedback
+            )
+
+        if feedback.isCanceled():
+               return {}
 
         # # Slope
-        processing.run("native:slope", slope_params, context = context, feedback = feedback)
+        processing.run(
+            "native:slope",
+            slope_params,
+            context = context,
+            feedback = feedback
+            )
+
+        if feedback.isCanceled():
+               return {}
 
         # Hillshade
-        processing.run("gdal:hillshade", hillshade_params, context = context, feedback = feedback)
+        processing.run(
+            "gdal:hillshade",
+            hillshade_params,
+            context = context,
+            feedback = feedback
+            )
+
+        if feedback.isCanceled():
+               return {}
 
         # Aspect
-        processing.run("gdal:aspect", aspect_params, context = context, feedback = feedback)
+        processing.run(
+            "gdal:aspect",
+            aspect_params,
+            context = context,
+            feedback = feedback
+            )
+
+        if feedback.isCanceled():
+               return {}
 
         # Relief
-        processing.run("qgis:relief", relief_params, context = context, feedback = feedback)
+        processing.run(
+            "qgis:relief",
+            relief_params,
+            context = context,
+            feedback = feedback
+            )
+
+        if feedback.isCanceled():
+               return {}
 
         # Ruggedness
-        processing.run("native:ruggednessindex", ruggedness_params, context = context, feedback = feedback)
+        processing.run(
+            "native:ruggednessindex",
+            ruggedness_params,
+            context = context,
+            feedback = feedback
+            )
+
+        if feedback.isCanceled():
+               return {}
+
+        # Slope 15 to 30 degrees
+        slope_result = processing.run(
+            "native:rastercalc",
+            slope_black_diamond_params,
+            is_child_algorithm = True,
+            context = context,
+            feedback = feedback)
+
+        if feedback.isCanceled():
+               return {}
+        # Polygonize slope 15 to 30 degrees
+        processing.run(
+            "gdal:polygonize",
+            polygonize_params,
+            context = context,
+            feedback = feedback
+            )
 
         return {}
