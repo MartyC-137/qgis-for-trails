@@ -178,18 +178,18 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         )
 
         # Black Diamond Polygons output
-        self.addParameter(
-            QgsProcessingParameterVectorDestination(
-                self.OUTPUT_BLACK_DIAMOND, self.tr("Black Diamond (Difficult) Polygons")
-            )
-        )
+        # self.addParameter(
+        #     QgsProcessingParameterVectorDestination(
+        #         self.OUTPUT_BLACK_DIAMOND, self.tr("Black Diamond (Difficult) Polygons")
+        #     )
+        # )
 
         # Blue Square Polygons output
-        self.addParameter(
-            QgsProcessingParameterVectorDestination(
-                self.OUTPUT_BLUE_SQUARE, self.tr("Blue Square (Intermediate) Polygons")
-            )
-        )
+        # self.addParameter(
+        #     QgsProcessingParameterVectorDestination(
+        #         self.OUTPUT_BLUE_SQUARE, self.tr("Blue Square (Intermediate) Polygons")
+        #     )
+        # )
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -376,4 +376,4 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         #     "gdal:polygonize", polygonize_params_black_diamond, context=context, feedback=feedback
         # )
 
-        # return {}
+        return {}
