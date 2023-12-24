@@ -1,10 +1,12 @@
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
+    QgsProject,
     QgsProcessingAlgorithm,
     QgsProcessingException,
     QgsProcessingParameterRasterLayer,
     QgsProcessingParameterVectorDestination,
     QgsProcessingParameterRasterDestination,
+    QgsVectorLayer
 )
 from qgis import processing
 
@@ -40,7 +42,6 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
     # Intermediate Slope Output
     OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND = 'OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND'
     OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE = 'OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE'
-    OUTPUT_SLOPE_INTERMEDIATE_CLIFFS = 'OUTPUT_SLOPE_INTERMEDIATE_CLIFFS'
 
     # Output Black Diamond Polygons
     OUTPUT_BLACK_DIAMOND = "OUTPUT_BLACK_DIAMOND"
@@ -136,17 +137,17 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         )
 
         # Intermediate Slope Outputs
-        self.addParameter(
-            QgsProcessingParameterRasterDestination(
-                self.OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND, self.tr("Intermediate Slope Output, Black Diamond")
-            )
-        )
+        # self.addParameter(
+        #     QgsProcessingParameterRasterDestination(
+        #         self.OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND, self.tr("Intermediate Slope Output, Black Diamond")
+        #     )
+        # )
 
-        self.addParameter(
-            QgsProcessingParameterRasterDestination(
-                self.OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE, self.tr("Intermediate Slope Output, Blue Square")
-            )
-        )
+        # self.addParameter(
+        #     QgsProcessingParameterRasterDestination(
+        #         self.OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE, self.tr("Intermediate Slope Output, Blue Square")
+        #     )
+        # )
 
         # Hillshade Output
         self.addParameter(
@@ -204,7 +205,7 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
                 "A valid input raster is required for this operation."
             )
 
-        # Contour parameter dictionaries
+        ########## Contours ##########
         contour_params_10m = {
             "INPUT": input_raster,
             "OUTPUT": parameters[self.OUTPUT_10M_CONTOURS],
@@ -229,7 +230,6 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
             "FIELD_NAME": "ELEV",
         }
 
-        # Contours
         processing.run(
             "gdal:contour", contour_params_10m, context=context, feedback=feedback
         )
@@ -243,8 +243,10 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
 
         if feedback.isCanceled():
             return {}
+        
+        # ---------------------------------------------------------------------
 
-        # Hillshade
+        ########## Hillshade ##########
         hillshade_params = {
             "INPUT": input_raster,
             "BAND": 1,
@@ -268,7 +270,9 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         if feedback.isCanceled():
             return {}
 
-        # Aspect
+        # ---------------------------------------------------------------------
+
+        ########## Aspect ##########
         aspect_params = {
             "INPUT": input_raster,
             "BAND": 1,
@@ -286,8 +290,9 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         if feedback.isCanceled():
             return {}
 
-        # Relief
+        # ---------------------------------------------------------------------
 
+        ########## Relief ##########
         relief_params = {
             "INPUT": input_raster,
             "Z_FACTOR": 2,
@@ -301,7 +306,9 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         if feedback.isCanceled():
             return {}
 
-        # Ruggedness
+        # ---------------------------------------------------------------------
+
+        ########## Ruggedness ##########
         ruggedness_params = {
             "INPUT": input_raster,
             "Z_FACTOR": 2,
@@ -318,7 +325,9 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         if feedback.isCanceled():
             return {}
 
-        # Slope
+        # ---------------------------------------------------------------------
+
+        ########## Slope ##########
         slope_params = {
             "INPUT": input_raster,
             "Z_FACTOR": 2,
@@ -335,69 +344,36 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         if feedback.isCanceled():
             return {}
 
-        # Raster Calculator for Black Diamond Polygons (Intermediate Step)
-        slope_black_diamond_params = {
-            "LAYERS": slope["OUTPUT"],
-            "EXPRESSION": f'"slope@1" >= 15 AND "slope@1" <= 30',
-            "EXTENT": None,
-            "CELL_SIZE": None,
-            "CRS": None,
-            "OUTPUT": parameters[self.OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND],
-        }
+        # ---------------------------------------------------------------------
 
-        slope_black_diamond = processing.run(
-            "qgis:rastercalculator",
-            slope_black_diamond_params,
-            context=context,
-            feedback=feedback,
-        )
+        ########## Black Diamond Polygons ##########
+        # slope_black_diamond_params = {
+        #     "LAYERS": slope["OUTPUT"],
+        #     "EXPRESSION": f'"slope@1" >= 15 AND "slope@1" <= 30',
+        #     "EXTENT": None,
+        #     "CELL_SIZE": None,
+        #     "CRS": None,
+        #     "OUTPUT": parameters[self.OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND],
+        # }
 
-        # Raster Calculator for Blue Square Polygons (Intermediate Step)
-        slope_blue_square_params = {
-            "LAYERS": slope["OUTPUT"],
-            "EXPRESSION": f'"slope@1" >= 5 AND "slope@1" <= 15',
-            "EXTENT": None,
-            "CELL_SIZE": None,
-            "CRS": None,
-            "OUTPUT": parameters[self.OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE],
-        }
+        # slope_black_diamond = processing.run(
+        #     "qgis:rastercalculator",
+        #     slope_black_diamond_params,
+        #     context=context,
+        #     feedback=feedback,
+        # )
 
-        slope_blue_square = processing.run(
-            "qgis:rastercalculator",
-            slope_blue_square_params,
-            context=context,
-            feedback=feedback,
-        )
+        # polygonize_params_black_diamond = {
+        #     "INPUT": slope_black_diamond["OUTPUT"],
+        #     "BAND": 1,
+        #     "FIELD": "DN",
+        #     "EIGHT_CONNECTEDNESS": False,
+        #     "EXTRA": "",
+        #     "OUTPUT": parameters[self.OUTPUT_BLACK_DIAMOND],
+        # }
 
-        if feedback.isCanceled():
-            return {}
+        # processing.run(
+        #     "gdal:polygonize", polygonize_params_black_diamond, context=context, feedback=feedback
+        # )
 
-        # Polygonize slope 15 to 30 degrees
-        polygonize_params_black_diamond = {
-            "INPUT": slope_black_diamond["OUTPUT"],
-            "BAND": 1,
-            "FIELD": "DN",
-            "EIGHT_CONNECTEDNESS": False,
-            "EXTRA": "",
-            "OUTPUT": parameters[self.OUTPUT_BLACK_DIAMOND],
-        }
-
-        processing.run(
-            "gdal:polygonize", polygonize_params_black_diamond, context=context, feedback=feedback
-        )
-
-        # Polygonize slope 5 to 15 degrees
-        polygonize_params_blue_square = {
-            "INPUT": slope_blue_square["OUTPUT"],
-            "BAND": 1,
-            "FIELD": "DN",
-            "EIGHT_CONNECTEDNESS": False,
-            "EXTRA": "",
-            "OUTPUT": parameters[self.OUTPUT_BLUE_SQUARE],
-        }
-
-        processing.run(
-            "gdal:polygonize", polygonize_params_blue_square, context=context, feedback=feedback
-        )
-
-        return {}
+        # return {}
