@@ -1,14 +1,13 @@
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
-    QgsProject,
     QgsProcessingAlgorithm,
     QgsProcessingException,
     QgsProcessingParameterRasterLayer,
     QgsProcessingParameterVectorDestination,
     QgsProcessingParameterRasterDestination,
-    QgsVectorLayer
 )
 from qgis import processing
+
 
 class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
     """
@@ -40,8 +39,8 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
     OUTPUT_RUGGEDNESS = "OUTPUT_RUGGEDNESS"
 
     # Intermediate Slope Output
-    OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND = 'OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND'
-    OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE = 'OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE'
+    OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND = "OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND"
+    OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE = "OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE"
 
     # Output Black Diamond Polygons
     OUTPUT_BLACK_DIAMOND = "OUTPUT_BLACK_DIAMOND"
@@ -243,7 +242,7 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
 
         if feedback.isCanceled():
             return {}
-        
+
         # ---------------------------------------------------------------------
 
         ########## Hillshade ##########
@@ -334,7 +333,7 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
             "OUTPUT": parameters[self.OUTPUT_SLOPE],
         }
 
-        slope = processing.run(
+        processing.run(
             "native:slope",
             slope_params,
             context=context,
