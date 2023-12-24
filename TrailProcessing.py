@@ -38,10 +38,6 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
     # Output Ruggedness
     OUTPUT_RUGGEDNESS = "OUTPUT_RUGGEDNESS"
 
-    # Intermediate Slope Output
-    OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND = "OUTPUT_SLOPE_INTERMEDIATE_BLACK_DIAMOND"
-    OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE = "OUTPUT_SLOPE_INTERMEDIATE_BLUE_SQUARE"
-
     # Output Black Diamond Polygons
     OUTPUT_BLACK_DIAMOND = "OUTPUT_BLACK_DIAMOND"
     OUTPUT_BLUE_SQUARE = "OUTPUT_BLUE_SQUARE"
@@ -143,11 +139,11 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         )
 
         # Aspect Output
-        self.addParameter(
-            QgsProcessingParameterRasterDestination(
-                self.OUTPUT_ASPECT, self.tr("Aspect output")
-            )
-        )
+        # self.addParameter(
+        #     QgsProcessingParameterRasterDestination(
+        #         self.OUTPUT_ASPECT, self.tr("Aspect output")
+        #     )
+        # )
 
         # Relief Output
         self.addParameter(
@@ -220,6 +216,24 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
             "gdal:contour", contour_params_10m, context=context, feedback=feedback
         )
 
+        processing.run(
+            "native:importintopostgis",
+            {
+                "INPUT": results_10m["OUTPUT"],
+                "DATABASE": "postgis",
+                "SCHEMA": "seven_mile_lake",
+                "TABLENAME": None,
+                "PRIMARY_KEY": "",
+                "GEOMETRY_COLUMN": "geom",
+                "ENCODING": "UTF-8",
+                "OVERWRITE": True,
+                "CREATEINDEX": True,
+                "LOWERCASE_NAMES": True,
+                "DROP_STRING_LENGTH": False,
+                "FORCE_SINGLEPART": False,
+            },
+        )
+
         results_5m = processing.run(
             "gdal:contour", contour_params_5m, context=context, feedback=feedback
         )
@@ -260,24 +274,24 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         # ---------------------------------------------------------------------
 
         ########## Aspect ##########
-        aspect_params = {
-            "INPUT": input_raster,
-            "BAND": 1,
-            "TRIG_ANGLE": False,
-            "ZERO_FLAT": False,
-            "COMPUTE_EDGES": False,
-            "ZEVENBERGEN": False,
-            "OPTIONS": "",
-            "EXTRA": "",
-            "OUTPUT": parameters[self.OUTPUT_ASPECT],
-        }
+        # aspect_params = {
+        #     "INPUT": input_raster,
+        #     "BAND": 1,
+        #     "TRIG_ANGLE": False,
+        #     "ZERO_FLAT": False,
+        #     "COMPUTE_EDGES": False,
+        #     "ZEVENBERGEN": False,
+        #     "OPTIONS": "",
+        #     "EXTRA": "",
+        #     "OUTPUT": parameters[self.OUTPUT_ASPECT],
+        # }
 
-        results_aspect = processing.run(
-            "gdal:aspect", aspect_params, context=context, feedback=feedback
-        )
+        # results_aspect = processing.run(
+        #     "gdal:aspect", aspect_params, context=context, feedback=feedback
+        # )
 
-        if feedback.isCanceled():
-            return {}
+        # if feedback.isCanceled():
+        #     return {}
 
         # ---------------------------------------------------------------------
 
@@ -338,46 +352,40 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         # ---------------------------------------------------------------------
 
         ########## Black Diamond Polygons ##########
-        slope_black_diamond_params = {
-            "LAYERS": results_slope["OUTPUT"],
-            "EXPRESSION": '"slope@1" >= 15 AND "slope@1" <= 30',
-            "EXTENT": None,
-            "CELL_SIZE": None,
-            "CRS": None,
-            "OUTPUT": "TEMPORARY_OUTPUT",
-        }
 
-        slope_black_diamond = processing.run(
-            "qgis:rastercalculator",
-            slope_black_diamond_params,
-            context=context,
-            feedback=feedback,
-        )
+        # slope_black_diamond_params = {
+        #     "INPUT_A": results_slope["OUTPUT"],
+        #     "BAND_A": 1,
+        #     "FORMULA": 'A*logical_and(A>=15,A<=30)',
+        #     "OUTPUT": "TEMPORARY_OUTPUT",
+        # }
 
-        polygonize_params_black_diamond = {
-            "INPUT": slope_black_diamond["OUTPUT"],
-            "BAND": 1,
-            "FIELD": "DN",
-            "EIGHT_CONNECTEDNESS": False,
-            "EXTRA": "",
-            "OUTPUT": parameters[self.OUTPUT_BLACK_DIAMOND],
-        }
+        # slope_black_diamond = processing.run("gdal:rastercalculator", slope_black_diamond_params)
 
-        results_polygonize_black_diamond = processing.run(
-            "gdal:polygonize",
-            polygonize_params_black_diamond,
-            context=context,
-            feedback=feedback,
-        )
+        # polygonize_params_black_diamond = {
+        #     "INPUT": slope_black_diamond["OUTPUT"],
+        #     "BAND": 1,
+        #     "FIELD": "DN",
+        #     "EIGHT_CONNECTEDNESS": False,
+        #     "EXTRA": "",
+        #     "OUTPUT": parameters[self.OUTPUT_BLACK_DIAMOND],
+        # }
+
+        # results_polygonize_black_diamond = processing.run(
+        #     "gdal:polygonize",
+        #     polygonize_params_black_diamond,
+        #     context=context,
+        #     feedback=feedback
+        # )
 
         return {
             "10M_CONTOURS": results_10m["OUTPUT"],
             "5M_CONTOURS": results_5m["OUTPUT"],
             "2M_CONTOURS": results_2m["OUTPUT"],
             "HILLSHADE": results_hillshade["OUTPUT"],
-            "ASPECT": results_aspect["OUTPUT"],
+            # "ASPECT": results_aspect["OUTPUT"],
             "RELIEF": results_relief["OUTPUT"],
             "RUGGEDNESS": results_ruggedness["OUTPUT"],
             "SLOPE": results_slope["OUTPUT"],
-            "BLACK_DIAMOND_POLYGONS": results_polygonize_black_diamond["OUTPUT"],
+            # "BLACK_DIAMOND_POLYGONS": results_polygonize_black_diamond["OUTPUT"]
         }
