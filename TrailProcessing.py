@@ -5,6 +5,9 @@ from qgis.core import (
     QgsProcessingParameterRasterLayer,
     QgsProcessingParameterVectorDestination,
     QgsProcessingParameterRasterDestination,
+    QgsProcessingParameterString,
+    QgsProcessingParameterProviderConnection,
+    QgsProcessingParameterDatabaseSchema,
 )
 from qgis import processing
 
@@ -14,6 +17,9 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
     This class takes a DEM as an argument, and produces a number of useful
     layers for trailbuilding.
     """
+
+    DATABASE = "DATABASE"
+    SCHEMA = "SCHEMA"
 
     # Input raster specified in the UI
     INPUT_RASTER = "INPUT_RASTER"
@@ -173,6 +179,33 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         #     )
         # )
 
+        # Available PostGIS databases
+        self.addParameter(
+            QgsProcessingParameterProviderConnection(
+                self.DATABASE,
+                self.tr("Database (connection name)"),
+                "postgres",
+                optional=True,
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterDatabaseSchema(
+                self.SCHEMA,
+                self.tr("Schema"),
+                defaultValue="public",
+                connectionParameterName=self.DATABASE,
+                optional=True,
+            )
+        )
+
+        # Schema Name
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.SCHEMA, self.tr("PostGIS Schema Name"), optional=True
+            )
+        )
+
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
@@ -188,6 +221,8 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
             )
 
         ########## Contours ##########
+
+        # Contour Parameter Dictionaries #
         contour_params_10m = {
             "INPUT": input_raster,
             "OUTPUT": parameters[self.OUTPUT_10M_CONTOURS],
@@ -212,26 +247,9 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
             "FIELD_NAME": "ELEV",
         }
 
+        # Process Contours
         results_10m = processing.run(
             "gdal:contour", contour_params_10m, context=context, feedback=feedback
-        )
-
-        processing.run(
-            "native:importintopostgis",
-            {
-                "INPUT": results_10m["OUTPUT"],
-                "DATABASE": "postgis",
-                "SCHEMA": "seven_mile_lake",
-                "TABLENAME": None,
-                "PRIMARY_KEY": "",
-                "GEOMETRY_COLUMN": "geom",
-                "ENCODING": "UTF-8",
-                "OVERWRITE": True,
-                "CREATEINDEX": True,
-                "LOWERCASE_NAMES": True,
-                "DROP_STRING_LENGTH": False,
-                "FORCE_SINGLEPART": False,
-            },
         )
 
         results_5m = processing.run(
@@ -241,6 +259,32 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         results_2m = processing.run(
             "gdal:contour", contour_params_2m, context=context, feedback=feedback
         )
+
+        # Upload contours to PostGIS & Vacuum Analyze
+        postgis_10m = {
+            "INPUT": results_10m["OUTPUT"],
+            "DATABASE": parameters[self.DATABASE],
+            "SCHEMA": parameters[self.SCHEMA],
+            "TABLENAME": None,
+            "PRIMARY_KEY": "",
+            "GEOMETRY_COLUMN": "geom",
+            "ENCODING": "UTF-8",
+            "OVERWRITE": True,
+            "CREATEINDEX": True,
+            "LOWERCASE_NAMES": True,
+            "DROP_STRING_LENGTH": False,
+            "FORCE_SINGLEPART": False,
+        }
+
+        # Import to PostGIS
+        if parameters[self.DATABASE]:
+            processing.run("native:importintopostgis", postgis_10m)
+
+        # This isn't working - if I can figure out how to pass the table name correctly, this will work...
+        # processing.run(
+        #     "native:postgisexecutesql",
+        #     {"DATABASE": parameters[self.DATABASE], "SQL":f'VACUUM ANALYZE {parameters[self.SCHEMA]}."{results_10m["OUTPUT"]}"'}
+        # )
 
         if feedback.isCanceled():
             return {}
@@ -287,7 +331,7 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         # }
 
         # results_aspect = processing.run(
-        #     "gdal:aspect", aspect_params, context=context, feedback=feedback
+        #     "gdal:aspect", aspect_params
         # )
 
         # if feedback.isCanceled():
@@ -340,10 +384,7 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         }
 
         results_slope = processing.run(
-            "native:slope",
-            slope_params,
-            context=context,
-            feedback=feedback,
+            "native:slope", slope_params, context=context, feedback=feedback
         )
 
         if feedback.isCanceled():
@@ -360,7 +401,7 @@ class TrailProcessingAlgorithm(QgsProcessingAlgorithm):
         #     "OUTPUT": "TEMPORARY_OUTPUT",
         # }
 
-        # slope_black_diamond = processing.run("gdal:rastercalculator", slope_black_diamond_params)
+        # slope_black_diamond = processing.run("gdal:rastercalculator", slope_black_diamond_params, context = context, feedback = feedback)
 
         # polygonize_params_black_diamond = {
         #     "INPUT": slope_black_diamond["OUTPUT"],
