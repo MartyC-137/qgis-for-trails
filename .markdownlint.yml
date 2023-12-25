@@ -17,5 +17,8 @@ MD013:
   # Stern length checking
   stern: false
 
+# MD033 - inline HTML: https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md033.md
+MD033: false
+
 # MD043/required-headings : Required heading structure : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md043.md
 MD043: false
