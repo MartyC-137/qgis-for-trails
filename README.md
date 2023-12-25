@@ -11,7 +11,9 @@
 - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
   - [Getting Started](#getting-started)
+  - [PostGIS Setup](#postgis-setup)
   - [Setting Up The Database](#setting-up-the-database)
+  - [Trail Processing Script](#trail-processing-script)
 
 ## Introduction
 
@@ -24,14 +26,23 @@ This project uses the following Docker base images:
 
 ## Getting Started
 
-**Download [Docker Desktop](https://www.docker.com/products/docker-desktop/)** 
+- [x] **Download [Docker Desktop](https://www.docker.com/products/docker-desktop/)**
 
-- Clone the repo:
+- [x] **Download [QGIS](https://www.qgis.org/en/site/forusers/download.html)** 
+
+- [x] Clone the repo:
+
   
 ``` sh
+# Standard:
 cd repo/path/here
-git clone https://github.com/MartyC-137/postgis-docker.git
+git clone https://github.com/MartyC-137/qgis-for-trails.git
+
+# GitHub CLI:
+cd repo/path/here
+gh repo clone MartyC-137/qgis-for-trails
 ```
+## PostGIS Setup
 
 - Create two directories in the root of the repo called `data` and `pgadmin`:
 
@@ -55,7 +66,7 @@ echo "my_postgres_password" > postgres_pwd.txt
 - If you didn't clone the repo and are working on your own, run the following:
   
 ``` sh
-echo "pgadmin_pwd.txt" >> .gitignore
+echo "*_pwd.txt" >> .gitignore
 echo "data/" >> .gitignore
 ```
 
@@ -85,3 +96,25 @@ On the Connection tab, enter the following info and click Save:
 - `Password`: the password from `postgres_pwd.txt`
 
 ![!PGAdmin2](/assets/pgadmin2.jpg)
+
+---
+
+## Trail Processing Script
+
+The python file `TrailProcessing.py` is a QGIS processing tool that creates the following:
+
+- [x] 10 meter contours
+- [x] 5 meter contours
+- [x] 2 meter contours
+- [x] Hillshade
+- [x] Slope
+- [x] Relief
+- [x] Ruggedness
+- [x] Aspect
+- [x] Polygons of Black Diamond Terrain (Slope = 15-30&deg;)
+
+Additionally, the script provides the option to save the vector layers to a PostGIS database w/ a spatial index:
+
+![!QGIS Generate Trail Layers](/assets/qgis_ui.jpg)
+
+`Database` and `Schema` are optional arguments - if no PostGIS connection is set up, the script will skip loading the created vector layers to a database.
