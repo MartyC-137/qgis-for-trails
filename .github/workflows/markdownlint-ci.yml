@@ -1,6 +1,6 @@
 name: Markdownlint testing
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   lint:
@@ -19,4 +19,4 @@ jobs:
         run: npm install -g markdownlint-cli
 
       - name: Lint Markdown Files
-        run: markdownlint '**/*.md'
+        run: markdownlint '**/*.md' --ignore node_modules
