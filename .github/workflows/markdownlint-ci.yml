@@ -7,5 +7,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: markdownlint-cli
-        uses: nosborn/github-action-markdown-cli@v3.3.0
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      - name: Install Markdown Linter
+        run: npm install -g markdownlint-cli
+
+      - name: Lint Markdown Files
+        run: markdownlint '**/*.md'
