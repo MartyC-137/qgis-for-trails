@@ -1,0 +1,15 @@
+<!-- Basic implementation -->
+<div style="width:400;height:400">
+    <p>test</p>
+    <div><img src="file:///Users/martinpalkovic/Documents/SevenMileLake/IMG_4302.jpeg" width="350" /></div>
+</div>
+
+<!-- More advanced. In this example, 'link1_href' contains the name of the image. -->
+<div style="width:400;height:400">
+    <p>test</p>
+    [% CASE
+        WHEN "link1_href" IS NOT NULL
+        THEN '<div><img src="file:///Users/martinpalkovic/Documents/SevenMileLake/' || "link1_href" || '" width="350"/></div>'
+        ELSE 'Not available'
+    END %]
+</div>
