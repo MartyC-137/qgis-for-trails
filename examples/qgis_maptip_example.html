@@ -1,3 +1,5 @@
+<!-- These tooltip examples can be used to display a local image in a maptip in QGIS -->
+
 <!-- Basic implementation -->
 <div style="width:400;height:400">
     <p>test</p>
@@ -19,13 +21,12 @@
     <p style="padding-bottom: 30px;">[% "name" %]</p>
     [% CASE
         WHEN "link1_href" IS NOT NULL
-            THEN '<div><img src="file:///Users/martinpalkovic/Documents/SevenMileLake/' || 
-            "link1_href" || 
-            '" width="350" style="transform:rotate(' || 
-            "rotation" || 
+            THEN '<div><img src="file:///Users/martinpalkovic/Documents/SevenMileLake/' ||
+            "link1_href" ||
+            '" width="350" style="transform:rotate(' ||
+            "rotation" ||
             'deg);"/></div>'
         ELSE
             'No picture available'
     END %]
 </div>
-
