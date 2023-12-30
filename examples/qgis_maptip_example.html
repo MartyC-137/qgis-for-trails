@@ -13,3 +13,19 @@
         ELSE 'No picture available'
     END %]
 </div>
+
+<!-- If the images need to be rotated. Add a field to the attribute table called "rotation" (default = 0 recommended) to rotate the image -->
+<div style="width:500;height:500;">
+    <p style="padding-bottom: 30px;">[% "name" %]</p>
+    [% CASE
+        WHEN "link1_href" IS NOT NULL
+            THEN '<div><img src="file:///Users/martinpalkovic/Documents/SevenMileLake/' || 
+            "link1_href" || 
+            '" width="350" style="transform:rotate(' || 
+            "rotation" || 
+            'deg);"/></div>'
+        ELSE
+            'No picture available'
+    END %]
+</div>
+
